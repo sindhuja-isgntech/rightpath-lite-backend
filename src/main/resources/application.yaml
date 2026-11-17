@@ -1,3 +1,35 @@
 spring:
   application:
     name: rightpath
+  # Loads KEY=VALUE pairs from a git-ignored ".env" file in the working directory.
+  # Real environment variables take precedence over the file.
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/rightpath}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+server:
+  port: 8080
+
+jwt:
+  # No default on purpose: the app refuses to start without a secret.
+  # Must be at least 32 characters for HS256.
+  secret: ${JWT_SECRET}
+  # Token lifetime in milliseconds (86400000 = 24 hours)
+  expiration: ${JWT_EXPIRATION_MS:86400000}
+
+app:
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
