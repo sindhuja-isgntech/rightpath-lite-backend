@@ -33,6 +33,9 @@ public class User {
 	@Column(name = "email", unique = true)
 	private String email;
 	
+	@Column(name = "mobile_number")
+	private String mobileNumber;
+
 	@Column(name = "password_hash", nullable = false)
     private String passwordHash;
 	

@@ -1,7 +1,7 @@
 package com.isigntech.rightpath.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -31,13 +31,22 @@ public class JobService {
 		User admin = userRepository.findByEmail(adminEmail)
 				.orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
 
-		Job job = new Job();
+		Job job = Job.builder()
+				.jobCode(generateJobCode())
+				.createdBy(admin)
+				.archived(false)
+				.build();
 		DtoMapper.apply(request, job);
-		job.setJobCode("JOB-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-		job.setCreatedBy(admin);
-		job.setArchived(false);
 
 		return DtoMapper.toResponse(jobRepository.save(job));
+	}
+
+	private String generateJobCode() {
+		String jobCode;
+		do {
+			jobCode = "JOB-" + UUID.randomUUID().toString().replace("-", "").toUpperCase(Locale.ROOT);
+		} while (jobRepository.existsByJobCode(jobCode));
+		return jobCode;
 	}
 
 	@Transactional
@@ -64,10 +73,8 @@ public class JobService {
 		if (isAdmin) {
 			jobs = jobRepository.findAll();
 		} else {
-			// Candidates see only non-archived, non-expired jobs
-			jobs = jobRepository.findByArchivedFalse().stream()
-					.filter(job -> job.getDeadline().isAfter(LocalDateTime.now()))
-					.toList();
+			// Candidates need expired listings too, so they can filter by deadline.
+			jobs = jobRepository.findByArchivedFalse();
 		}
 		return jobs.stream().map(DtoMapper::toResponse).toList();
 	}

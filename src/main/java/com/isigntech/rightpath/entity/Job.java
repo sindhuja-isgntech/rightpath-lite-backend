@@ -17,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,6 +37,7 @@ public class Job {
 	private Long id;
 	
 	@Column(name = "job_code",unique = true,nullable = false,updatable=false )
+    @Setter(AccessLevel.NONE)
 	private String jobCode;
 	
 	@Column(nullable = false)

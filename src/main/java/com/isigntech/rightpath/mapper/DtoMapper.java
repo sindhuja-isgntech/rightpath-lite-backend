@@ -24,6 +24,7 @@ public final class DtoMapper {
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
+                user.getMobileNumber(),
                 user.getRole(),
                 user.getCreatedAt());
     }

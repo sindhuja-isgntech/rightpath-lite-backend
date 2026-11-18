@@ -11,6 +11,8 @@ import com.isigntech.rightpath.entity.Job;
 public interface JobRepository extends JpaRepository<Job, Long>, JpaSpecificationExecutor<Job>{
 	
 	Optional<Job> findByJobCode(String jobCode);
+
+	boolean existsByJobCode(String jobCode);
 	
 	List<Job> findByArchivedFalse();
 	
