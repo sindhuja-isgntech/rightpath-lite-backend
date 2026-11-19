@@ -3,6 +3,7 @@ package com.isigntech.rightpath.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,9 @@ public class ApplicationService {
 		Job job = jobRepository.findById(jobId)
 				.orElseThrow(() -> new ResourceNotFoundException("Job not found"));
 
-		if (job.isArchived() || job.getDeadline().isBefore(LocalDateTime.now())) {
+		if (job.isArchived()
+				|| !"OPEN".equalsIgnoreCase(job.getStatus())
+				|| !job.getDeadline().isAfter(LocalDateTime.now())) {
 			throw new BadRequestException("Cannot apply to inactive or expired jobs");
 		}
 
@@ -55,7 +58,12 @@ public class ApplicationService {
 				.status(Application.ApplicationStatus.APPLIED)
 				.build();
 
-		return DtoMapper.toResponse(applicationRepository.save(application));
+		try {
+			return DtoMapper.toResponse(applicationRepository.saveAndFlush(application));
+		} catch (DataIntegrityViolationException ex) {
+			// The unique (job_id, candidate_id) constraint also protects concurrent submissions.
+			throw new ConflictException("Already applied to this job");
+		}
 	}
 
 	@Transactional
@@ -65,11 +73,16 @@ public class ApplicationService {
 				.orElseThrow(() -> new ResourceNotFoundException("Application not found"));
 
 		Application.ApplicationStatus oldStatus = app.getStatus();
-
-		// Terminal statuses cannot be changed
-		if (oldStatus == Application.ApplicationStatus.SELECTED
-				|| oldStatus == Application.ApplicationStatus.REJECTED) {
-			throw new BadRequestException("Cannot update terminal application status");
+		boolean validTransition = switch (oldStatus) {
+			case APPLIED -> newStatus == Application.ApplicationStatus.SHORTLISTED
+					|| newStatus == Application.ApplicationStatus.REJECTED;
+			case SHORTLISTED -> newStatus == Application.ApplicationStatus.SELECTED
+					|| newStatus == Application.ApplicationStatus.REJECTED;
+			case SELECTED, REJECTED -> false;
+		};
+		if (!validTransition) {
+			throw new BadRequestException(
+					"Invalid application status transition from " + oldStatus + " to " + newStatus);
 		}
 
 		User admin = userRepository.findByEmail(adminEmail)
