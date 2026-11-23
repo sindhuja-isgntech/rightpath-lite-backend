@@ -41,10 +41,11 @@ public class JobService {
 		return DtoMapper.toResponse(jobRepository.save(job));
 	}
 
+	/** Short, readable reference such as JOB-3F9A1C2B (8 hex chars), re-rolled on the rare collision. */
 	private String generateJobCode() {
 		String jobCode;
 		do {
-			jobCode = "JOB-" + UUID.randomUUID().toString().replace("-", "").toUpperCase(Locale.ROOT);
+			jobCode = "JOB-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
 		} while (jobRepository.existsByJobCode(jobCode));
 		return jobCode;
 	}

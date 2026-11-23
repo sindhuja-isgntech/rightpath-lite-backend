@@ -19,6 +19,9 @@ import com.isigntech.rightpath.dto.ApplicationStatusUpdateRequest;
 import com.isigntech.rightpath.dto.MessageResponse;
 import com.isigntech.rightpath.service.ApplicationService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -26,21 +29,26 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/admin/applications")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "Admin applications", description = "Admin application review and status management")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminController {
 
 	private final ApplicationService applicationService;
 
 	@GetMapping
+	@Operation(summary = "List all applications (admin only)")
 	public ResponseEntity<List<ApplicationResponse>> getAllApplications() {
 		return ResponseEntity.ok(applicationService.getAllApplications());
 	}
 
 	@GetMapping("/{id}/history")
+	@Operation(summary = "Get an application's status history (admin only)")
 	public ResponseEntity<List<ApplicationStatusHistoryResponse>> getStatusHistory(@PathVariable Long id) {
 		return ResponseEntity.ok(applicationService.getStatusHistory(id));
 	}
 
 	@PatchMapping("/{id}/status")
+	@Operation(summary = "Update an application's status (admin only)")
 	public ResponseEntity<MessageResponse> updateApplicationStatus(
 			@PathVariable Long id,
 			@Valid @RequestBody ApplicationStatusUpdateRequest request,
